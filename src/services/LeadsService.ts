@@ -63,16 +63,7 @@ export class LeadsService {
   }
 
   async getFilteredLeads(params: FilteredCampaignLeads) {
-    let include = {};
-    if (params.where.campaignId) {
-      include = { campaigns: true };
-    } else {
-      include = { groups: true };
-    }
-    const leads = await this.leadsRepository.find({
-      ...params,
-      include,
-    });
+    const leads = await this.leadsRepository.find(params);
     return leads;
   }
 
