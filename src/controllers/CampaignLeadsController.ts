@@ -4,15 +4,13 @@ import {
   GetCampaignLeadsRequestSchema,
   UpdateLeadStatusRequestSchema,
 } from "./zod_schemas/CampaignsRequestSchema";
-import {
-  LeadsRepository,
-  LeadWhereParams,
-} from "../repositories/LeadsRepository";
+import { LeadWhereParams } from "../repositories/LeadsRepository";
 import { CampaignsService } from "../services/CampaignsService";
+import { LeadsService } from "../services/LeadsService";
 
 export class CampaignLeadsController {
   constructor(
-    private readonly leadsRepository: LeadsRepository,
+    private readonly leadsService: LeadsService,
     private readonly campaignsService: CampaignsService
   ) {}
 
@@ -36,16 +34,15 @@ export class CampaignLeadsController {
 
       if (name) where.name = { like: name, mode: "insensitive" };
 
-      const leads = await this.leadsRepository.find({
+      const leads = await this.leadsService.getFilteredLeads({
         where,
         sortBy,
         order,
         limit,
         offset,
-        include: { campaigns: true },
       });
 
-      const total = await this.leadsRepository.count(where);
+      const total = await this.leadsService.countLeads(where);
 
       res.json({
         leads,

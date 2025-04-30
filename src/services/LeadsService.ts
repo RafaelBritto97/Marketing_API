@@ -15,6 +15,13 @@ interface GetLeadsWithPaginationParams {
   order?: "asc" | "desc";
   campaignId?: number;
 }
+interface FilteredCampaignLeads {
+  where: LeadWhereParams;
+  sortBy?: "name" | "status" | "createdAt";
+  order?: "asc" | "desc";
+  limit: number;
+  offset: number;
+}
 
 export class LeadsService {
   constructor(private readonly leadsRepository: LeadsRepository) {}
@@ -55,10 +62,29 @@ export class LeadsService {
     return lead;
   }
 
+  async getFilteredLeads(params: FilteredCampaignLeads) {
+    let include = {};
+    if (params.where.campaignId) {
+      include = { campaigns: true };
+    } else {
+      include = { groups: true };
+    }
+    const leads = await this.leadsRepository.find({
+      ...params,
+      include,
+    });
+    return leads;
+  }
+
   async createLead(params: CreateLeadAttributes) {
     if (!params.status) params.status = "New";
     const newLead = await this.leadsRepository.create(params);
     return newLead;
+  }
+
+  async countLeads(where: LeadWhereParams) {
+    const total = await this.leadsRepository.count(where);
+    return total;
   }
 
   async updateLead(leadId: number, params: Partial<CreateLeadAttributes>) {

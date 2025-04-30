@@ -1,16 +1,13 @@
 import { Handler } from "express";
 import { GetLeadsRequestSchema } from "./zod_schemas/LeadRequestSchema";
 import { AddLeadRequestSchema } from "./zod_schemas/GroupsRequestSchema";
-import { GroupsRepository } from "../repositories/GroupsRepository";
-import {
-  LeadsRepository,
-  LeadWhereParams,
-} from "../repositories/LeadsRepository";
+import { LeadWhereParams } from "../repositories/LeadsRepository";
 import { GroupsService } from "../services/GroupsService";
+import { LeadsService } from "../services/LeadsService";
 
 export class GroupLeadsController {
   constructor(
-    private readonly leadsRepository: LeadsRepository,
+    private readonly leadsService: LeadsService,
     private readonly groupsService: GroupsService
   ) {}
   //GET /groups/groupId/leads
@@ -35,16 +32,15 @@ export class GroupLeadsController {
       if (name) where.name = { like: name, mode: "insensitive" };
       if (status) where.status = status;
 
-      const leads = await this.leadsRepository.find({
+      const leads = await this.leadsService.getFilteredLeads({
         where,
         sortBy,
         order,
         limit,
         offset,
-        include: { groups: true },
       });
 
-      const total = await this.leadsRepository.count(where);
+      const total = await this.leadsService.countLeads(where);
 
       res.json({
         leads,

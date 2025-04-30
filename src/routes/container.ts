@@ -21,11 +21,11 @@ export const campaignsService = new CampaignsService(campaignsRepository);
 export const leadsController = new LeadsController(leadsService);
 export const groupsController = new GroupsController(groupsService);
 export const groupLeadsController = new GroupLeadsController(
-  leadsRepository,
+  leadsService,
   groupsService
 );
 export const campaignController = new CampaignController(campaignsService);
 export const campaignLeadsController = new CampaignLeadsController(
-  leadsRepository,
+  leadsService,
   campaignsService
 );
