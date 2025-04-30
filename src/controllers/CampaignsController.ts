@@ -1,15 +1,19 @@
 import { Handler } from "express";
-import { prisma } from "../database";
 import {
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
 } from "./zod_schemas/CampaignsRequestSchema";
 import { HttpError } from "../errors/HttpError";
+import { CampaignsRepository } from "../repositories/CampaignsRepository";
 
 export class CampaignController {
+
+  constructor(
+    private readonly campaignRepository: CampaignsRepository
+  ) {}
   index: Handler = async (req, res, next) => {
     try {
-      const campaigns = await prisma.campaign.findMany();
+      const campaigns = await this.campaignRepository.find()
 
       res.status(200).json(campaigns);
     } catch (error) {
@@ -20,7 +24,7 @@ export class CampaignController {
   create: Handler = async (req, res, next) => {
     try {
       const body = CreateCampaignRequestSchema.parse(req.body);
-      const newCampaign = await prisma.campaign.create({ data: body });
+      const newCampaign = await this.campaignRepository.create(body)
 
       res.status(201).json(newCampaign);
     } catch (error) {
@@ -31,16 +35,7 @@ export class CampaignController {
   select: Handler = async (req, res, next) => {
     try {
       const id = +req.params.id;
-      const campaign = await prisma.campaign.findUnique({
-        where: { id },
-        include: {
-          leads: {
-            include: {
-              lead: true,
-            },
-          },
-        },
-      });
+      const campaign = await this.campaignRepository.findById(id)
       if (!campaign) throw new HttpError(404, "campanha não encontrada");
 
       res.status(200).json(campaign);
@@ -54,13 +49,8 @@ export class CampaignController {
       const id = +req.params.id;
       const body = UpdateCampaignRequestSchema.parse(req.body);
 
-      const campaign = await prisma.campaign.findUnique({ where: { id } });
-      if (!campaign) throw new HttpError(404, "campanha não encontrada");
-
-      const updatedCampaign = await prisma.campaign.update({
-        where: { id },
-        data: body,
-      });
+      const updatedCampaign = await this.campaignRepository.updateById(id, body)
+      if (!updatedCampaign) throw new HttpError(404, "campanha não encontrada");
 
       res.status(200).json(updatedCampaign);
     } catch (error) {
@@ -71,10 +61,9 @@ export class CampaignController {
   delete: Handler = async (req, res, next) => {
     try {
       const id = +req.params.id;
-      const campaign = await prisma.campaign.findUnique({ where: { id } });
-      if (!campaign) throw new HttpError(404, "campanha não encontrada");
-
-      const deletedCampaign = await prisma.campaign.delete({ where: { id } });
+      
+      const deletedCampaign = await this.campaignRepository.deleteById(id)
+      if (!deletedCampaign) throw new HttpError(404, "campanha não encontrada");
 
       res.status(200).json(deletedCampaign);
     } catch (error) {
