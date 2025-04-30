@@ -1,11 +1,9 @@
 import { Handler } from "express";
-import { Prisma } from "@prisma/client";
 import {
   AddLeadRequestSchema,
   GetCampaignLeadsRequestSchema,
   UpdateLeadStatusRequestSchema,
 } from "./zod_schemas/CampaignsRequestSchema";
-import { prisma } from "../database";
 import { CampaignsRepository } from "../repositories/CampaignsRepository";
 import {
   LeadsRepository,
