@@ -4,16 +4,16 @@ import {
   GetCampaignLeadsRequestSchema,
   UpdateLeadStatusRequestSchema,
 } from "./zod_schemas/CampaignsRequestSchema";
-import { CampaignsRepository } from "../repositories/CampaignsRepository";
 import {
   LeadsRepository,
   LeadWhereParams,
 } from "../repositories/LeadsRepository";
+import { CampaignsService } from "../services/CampaignsService";
 
 export class CampaignLeadsController {
   constructor(
-    private readonly campaignsRepository: CampaignsRepository,
-    private readonly leadsRepository: LeadsRepository
+    private readonly leadsRepository: LeadsRepository,
+    private readonly campaignsService: CampaignsService
   ) {}
 
   getLeads: Handler = async (req, res, next) => {
@@ -65,7 +65,7 @@ export class CampaignLeadsController {
     try {
       const campaignId = +req.params.campaignId;
       const { leadId, status = "New" } = AddLeadRequestSchema.parse(req.body);
-      await this.campaignsRepository.addLead({ campaignId, leadId, status });
+      await this.campaignsService.addLeadToCampaign(campaignId, leadId, status);
       res.status(201).end();
     } catch (error) {
       next(error);
@@ -77,12 +77,11 @@ export class CampaignLeadsController {
       const campaignId = +req.params.campaignId;
       const leadId = +req.params.leadId;
       const { status } = UpdateLeadStatusRequestSchema.parse(req.body);
-
-      await this.campaignsRepository.updateLeadStatus({
+      await this.campaignsService.updateCampaignLeadStatus(
         campaignId,
         leadId,
-        status,
-      });
+        status
+      );
       res.status(204);
     } catch (error) {
       next(error);
@@ -93,8 +92,7 @@ export class CampaignLeadsController {
     try {
       const campaignId = +req.params.campaignId;
       const leadId = +req.params.leadId;
-
-      await this.campaignsRepository.removeLead(campaignId, leadId);
+      await this.campaignsService.removeLeadFromCampaign(campaignId, leadId);
       res.status(204);
     } catch (error) {
       next(error);

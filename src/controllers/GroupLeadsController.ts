@@ -1,18 +1,18 @@
 import { Handler } from "express";
 import { GetLeadsRequestSchema } from "./zod_schemas/LeadRequestSchema";
-import { Prisma } from "@prisma/client";
-import { prisma } from "../database";
 import { AddLeadRequestSchema } from "./zod_schemas/GroupsRequestSchema";
 import { GroupsRepository } from "../repositories/GroupsRepository";
-import { LeadsRepository, LeadWhereParams } from "../repositories/LeadsRepository";
+import {
+  LeadsRepository,
+  LeadWhereParams,
+} from "../repositories/LeadsRepository";
+import { GroupsService } from "../services/GroupsService";
 
 export class GroupLeadsController {
-
   constructor(
-    private readonly groupsRepository: GroupsRepository,
-    private readonly leadsRepository: LeadsRepository
-
-  ){}
+    private readonly leadsRepository: LeadsRepository,
+    private readonly groupsService: GroupsService
+  ) {}
   //GET /groups/groupId/leads
   getLeads: Handler = async (req, res, next) => {
     try {
@@ -27,8 +27,8 @@ export class GroupLeadsController {
         order = "asc",
       } = query;
 
-      const limit = +pageSize
-      const offset = (+page - 1) * limit
+      const limit = +pageSize;
+      const offset = (+page - 1) * limit;
 
       const where: LeadWhereParams = { groupId };
 
@@ -36,10 +36,15 @@ export class GroupLeadsController {
       if (status) where.status = status;
 
       const leads = await this.leadsRepository.find({
-        where, sortBy, order, limit, offset, include: {groups: true}
-      })
+        where,
+        sortBy,
+        order,
+        limit,
+        offset,
+        include: { groups: true },
+      });
 
-      const total = await this.leadsRepository.count(where)
+      const total = await this.leadsRepository.count(where);
 
       res.json({
         leads,
@@ -58,9 +63,11 @@ export class GroupLeadsController {
   addLead: Handler = async (req, res, next) => {
     try {
       const { leadId } = AddLeadRequestSchema.parse(req.body);
-      const groupId = +req.params.groupId
-
-      const updatedGroup = await this.groupsRepository.addLead(groupId, leadId)
+      const groupId = +req.params.groupId;
+      const updatedGroup = await this.groupsService.addLeadToGroup(
+        groupId,
+        leadId
+      );
       res.status(201).json(updatedGroup);
     } catch (error) {
       next(error);
@@ -69,9 +76,12 @@ export class GroupLeadsController {
 
   deleteLead: Handler = async (req, res, next) => {
     try {
-      const groupId = +req.params.groupId
-      const leadId = +req.params.leadId
-      const updatedGroup = await this.groupsRepository.removeLead(groupId, leadId)
+      const groupId = +req.params.groupId;
+      const leadId = +req.params.leadId;
+      const updatedGroup = await this.groupsService.deleteLeadFromGroup(
+        groupId,
+        leadId
+      );
       res.json(updatedGroup);
     } catch (error) {
       next(error);
